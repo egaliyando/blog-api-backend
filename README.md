@@ -1,2 +1,27 @@
-# blog-api-backend
-Simple RESTful API built with Node.js and Express. This project is part of my Fullstack Developer learning roadmap — focused on mastering backend fundamentals, including routing, middleware, and REST API design.
+# 📝 Blog API Backend
+
+A simple RESTful API built with **Node.js** and **Express**, created as part of my Fullstack Developer roadmap journey.  
+This project focuses on understanding backend fundamentals — including server setup, routing, middleware, and REST API design.
+
+---
+
+## 🚀 Features
+- Basic Express server setup  
+- RESTful API routes (GET, POST, PUT, DELETE)  
+- In-memory data storage (no database yet)  
+- Simple route structure using MVC pattern  
+- Error handling middleware  
+- Ready for extension with database and authentication (next stages)
+
+---
+
+## 🧩 Tech Stack
+- **Node.js** (runtime)
+- **Express.js** (web framework)
+- **Nodemon** (dev auto-reload)
+- **Postman** (API testing)
+
+---
+
+## 📁 Project Structure
+
