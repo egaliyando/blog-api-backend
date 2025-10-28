@@ -24,7 +24,7 @@ This project focuses on understanding backend fundamentals — including server 
 ---
 
 ## 📁 Project Structure
-blog-api-backend/
+``` blog-api-backend/
 ├── src/
 │   ├── controllers/
 │   │   └── postController.js
@@ -38,5 +38,5 @@ blog-api-backend/
 ├── .env
 ├── .env.example
 ├── .gitignore
-└── package.json
+└── package.json ```
 
