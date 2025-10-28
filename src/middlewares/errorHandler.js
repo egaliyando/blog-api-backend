@@ -2,46 +2,39 @@ const AppError = require('../utils/AppError');
 
 // Global error handler
 const errorHandler = (err, req, res, next) => {
-  err.statusCode = err.statusCode || 500;
-  err.status = err.status || 'error';
+  const statusCode = err.statusCode || 500;
+  const message = err.message || 'Internal server error';
+  const errorCode = err.errorCode || 'INTERNAL_SERVER_ERROR';
 
+  // Log error untuk debugging (tampil di console/terminal)
   if (process.env.NODE_ENV === 'development') {
-    sendErrorDev(err, res);
-  } else {
-    sendErrorProd(err, res);
+    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.error('🔴 ERROR DETAILS:');
+    console.error('Code:', errorCode);
+    console.error('Status:', statusCode);
+    console.error('Message:', message);
+    console.error('Timestamp:', new Date().toISOString());
+    if (err.stack) {
+      console.error('Stack:', err.stack);
+    }
+    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+  } else if (statusCode === 500) {
+    // Log 500 errors di production juga
+    console.error('ERROR 💥', {
+      code: errorCode,
+      message: err.message,
+      timestamp: new Date().toISOString()
+    });
   }
-};
 
-// Development error response
-const sendErrorDev = (err, res) => {
-  res.status(err.statusCode).json({
+  // Response dengan error code yang jelas
+  res.status(statusCode).json({
     success: false,
-    status: err.status,
-    error: err,
-    message: err.message,
-    stack: err.stack
+    error: {
+      code: errorCode,
+      message: message
+    }
   });
-};
-
-// Production error response
-const sendErrorProd = (err, res) => {
-  // Operational, trusted error: send message to client
-  if (err.isOperational) {
-    res.status(err.statusCode).json({
-      success: false,
-      status: err.status,
-      message: err.message
-    });
-  } 
-  // Programming or other unknown error: don't leak error details
-  else {
-    console.error('ERROR 💥', err);
-    res.status(500).json({
-      success: false,
-      status: 'error',
-      message: 'Something went wrong'
-    });
-  }
 };
 
 // Handle async errors

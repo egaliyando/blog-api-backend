@@ -1,3 +1,5 @@
+const ERROR_CODES = require('../utils/errorCodes');
+
 // Simple in-memory rate limiter
 const rateLimitMap = new Map();
 
@@ -38,9 +40,11 @@ const rateLimit = (options = {}) => {
     if (record.count > max) {
       return res.status(429).json({
         success: false,
-        status: 'fail',
-        message: message,
-        retryAfter: Math.ceil((record.resetTime - now) / 1000)
+        error: {
+          code: ERROR_CODES.RATE_LIMIT_EXCEEDED,
+          message: message,
+          retryAfter: Math.ceil((record.resetTime - now) / 1000)
+        }
       });
     }
 

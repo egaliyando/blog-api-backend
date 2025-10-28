@@ -1,127 +1,109 @@
+const { body, param, validationResult } = require('express-validator');
 const AppError = require('../utils/AppError');
+const ERROR_CODES = require('../utils/errorCodes');
+
+// Middleware to handle validation results
+const handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  
+  if (!errors.isEmpty()) {
+    const errorMessages = errors.array().map(err => err.msg);
+    return next(new AppError(errorMessages.join(', '), 400, ERROR_CODES.VALIDATION_ERROR));
+  }
+  
+  next();
+};
 
 // Validate post creation
-const validatePostCreation = (req, res, next) => {
-  const { title, content, author } = req.body;
-  const errors = [];
-
-  // Validate title
-  if (!title) {
-    errors.push('Title is required');
-  } else if (typeof title !== 'string') {
-    errors.push('Title must be a string');
-  } else if (title.trim().length < 3) {
-    errors.push('Title must be at least 3 characters long');
-  } else if (title.trim().length > 200) {
-    errors.push('Title must not exceed 200 characters');
-  }
-
-  // Validate content
-  if (!content) {
-    errors.push('Content is required');
-  } else if (typeof content !== 'string') {
-    errors.push('Content must be a string');
-  } else if (content.trim().length < 10) {
-    errors.push('Content must be at least 10 characters long');
-  } else if (content.trim().length > 10000) {
-    errors.push('Content must not exceed 10000 characters');
-  }
-
-  // Validate author
-  if (!author) {
-    errors.push('Author is required');
-  } else if (typeof author !== 'string') {
-    errors.push('Author must be a string');
-  } else if (author.trim().length < 2) {
-    errors.push('Author name must be at least 2 characters long');
-  } else if (author.trim().length > 100) {
-    errors.push('Author name must not exceed 100 characters');
-  }
-
-  if (errors.length > 0) {
-    return next(new AppError(errors.join(', '), 400));
-  }
-
-  // Sanitize input
-  req.body.title = title.trim();
-  req.body.content = content.trim();
-  req.body.author = author.trim();
-
-  next();
-};
+const validatePostCreation = [
+  body('title')
+    .trim()
+    .notEmpty()
+    .withMessage('Title is required')
+    .isString()
+    .withMessage('Title must be a string')
+    .isLength({ min: 3, max: 200 })
+    .withMessage('Title must be between 3 and 200 characters'),
+  
+  body('content')
+    .trim()
+    .notEmpty()
+    .withMessage('Content is required')
+    .isString()
+    .withMessage('Content must be a string')
+    .isLength({ min: 10, max: 10000 })
+    .withMessage('Content must be between 10 and 10000 characters'),
+  
+  body('author')
+    .trim()
+    .notEmpty()
+    .withMessage('Author is required')
+    .isString()
+    .withMessage('Author must be a string')
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Author name must be between 2 and 100 characters'),
+  
+  handleValidationErrors
+];
 
 // Validate post update
-const validatePostUpdate = (req, res, next) => {
-  const { title, content, author } = req.body;
-  const errors = [];
-
-  // Check if at least one field is provided
-  if (!title && !content && !author) {
-    return next(new AppError('At least one field (title, content, or author) must be provided', 400));
-  }
-
-  // Validate title if provided
-  if (title !== undefined) {
-    if (typeof title !== 'string') {
-      errors.push('Title must be a string');
-    } else if (title.trim().length < 3) {
-      errors.push('Title must be at least 3 characters long');
-    } else if (title.trim().length > 200) {
-      errors.push('Title must not exceed 200 characters');
-    } else {
-      req.body.title = title.trim();
-    }
-  }
-
-  // Validate content if provided
-  if (content !== undefined) {
-    if (typeof content !== 'string') {
-      errors.push('Content must be a string');
-    } else if (content.trim().length < 10) {
-      errors.push('Content must be at least 10 characters long');
-    } else if (content.trim().length > 10000) {
-      errors.push('Content must not exceed 10000 characters');
-    } else {
-      req.body.content = content.trim();
-    }
-  }
-
-  // Validate author if provided
-  if (author !== undefined) {
-    if (typeof author !== 'string') {
-      errors.push('Author must be a string');
-    } else if (author.trim().length < 2) {
-      errors.push('Author name must be at least 2 characters long');
-    } else if (author.trim().length > 100) {
-      errors.push('Author name must not exceed 100 characters');
-    } else {
-      req.body.author = author.trim();
-    }
-  }
-
-  if (errors.length > 0) {
-    return next(new AppError(errors.join(', '), 400));
-  }
-
-  next();
-};
+const validatePostUpdate = [
+  body('title')
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage('Title cannot be empty')
+    .isString()
+    .withMessage('Title must be a string')
+    .isLength({ min: 3, max: 200 })
+    .withMessage('Title must be between 3 and 200 characters'),
+  
+  body('content')
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage('Content cannot be empty')
+    .isString()
+    .withMessage('Content must be a string')
+    .isLength({ min: 10, max: 10000 })
+    .withMessage('Content must be between 10 and 10000 characters'),
+  
+  body('author')
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage('Author cannot be empty')
+    .isString()
+    .withMessage('Author must be a string')
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Author name must be between 2 and 100 characters'),
+  
+  // Custom validation to check if at least one field is provided
+  body()
+    .custom((value, { req }) => {
+      if (!req.body.title && !req.body.content && !req.body.author) {
+        throw new Error('At least one field (title, content, or author) must be provided');
+      }
+      return true;
+    }),
+  
+  handleValidationErrors
+];
 
 // Validate ID parameter
-const validateId = (req, res, next) => {
-  const id = parseInt(req.params.id);
+const validateId = [
+  param('id')
+    .isInt({ min: 1 })
+    .withMessage('Invalid ID parameter. ID must be a positive integer')
+    .toInt(),
   
-  if (isNaN(id) || id < 1) {
-    return next(new AppError('Invalid ID parameter. ID must be a positive number', 400));
-  }
-  
-  req.params.id = id;
-  next();
-};
+  handleValidationErrors
+];
 
 // Validate JSON body
 const validateJSONBody = (err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
-    return next(new AppError('Invalid JSON in request body', 400));
+    return next(new AppError('Invalid JSON in request body', 400, ERROR_CODES.INVALID_JSON));
   }
   next();
 };
@@ -130,5 +112,6 @@ module.exports = {
   validatePostCreation,
   validatePostUpdate,
   validateId,
-  validateJSONBody
+  validateJSONBody,
+  handleValidationErrors
 };

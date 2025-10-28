@@ -4,6 +4,8 @@ const dotenv = require('dotenv');
 const { errorHandler } = require('./middlewares/errorHandler');
 const { validateJSONBody } = require('./middlewares/validation');
 const rateLimit = require('./middlewares/rateLimit');
+const AppError = require('./utils/AppError');
+const ERROR_CODES = require('./utils/errorCodes');
 
 // Load environment variables
 dotenv.config();
@@ -37,18 +39,16 @@ app.get('/', (req, res) => {
     message: 'Welcome to Blog API',
     version: '1.0.0',
     endpoints: {
-      api: '/api'
-    }
+      health: "/api/health",
+      users: "/api/users",
+      posts: "/api/posts",
+    },
   });
 });
 
 // 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    status: 'fail',
-    message: 'The requested resource does not exist'
-  });
+app.use((req, res, next) => {
+  next(new AppError('Route not found', 404, ERROR_CODES.ROUTE_NOT_FOUND));
 });
 
 // Global error handler

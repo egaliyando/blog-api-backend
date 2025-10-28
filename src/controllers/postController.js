@@ -1,5 +1,6 @@
 const { catchAsync } = require('../middlewares/errorHandler');
 const AppError = require('../utils/AppError');
+const ERROR_CODES = require('../utils/errorCodes');
 
 // Temporary in-memory storage (nanti bisa diganti dengan database)
 let posts = [
@@ -33,7 +34,7 @@ const getPostById = catchAsync(async (req, res, next) => {
   const post = posts.find(p => p.id === parseInt(req.params.id));
   
   if (!post) {
-    return next(new AppError('Post not found', 404));
+    return next(new AppError('Post not found', 404, ERROR_CODES.RESOURCE_NOT_FOUND));
   }
   
   res.json({
@@ -68,7 +69,7 @@ const updatePost = catchAsync(async (req, res, next) => {
   const postIndex = posts.findIndex(p => p.id === parseInt(req.params.id));
   
   if (postIndex === -1) {
-    return next(new AppError('Post not found', 404));
+    return next(new AppError('Post not found', 404, ERROR_CODES.RESOURCE_NOT_FOUND));
   }
   
   const { title, content, author } = req.body;
@@ -93,7 +94,7 @@ const deletePost = catchAsync(async (req, res, next) => {
   const postIndex = posts.findIndex(p => p.id === parseInt(req.params.id));
   
   if (postIndex === -1) {
-    return next(new AppError('Post not found', 404));
+    return next(new AppError('Post not found', 404, ERROR_CODES.RESOURCE_NOT_FOUND));
   }
   
   const deletedPost = posts.splice(postIndex, 1)[0];
