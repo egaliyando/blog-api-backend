@@ -1,3 +1,6 @@
+const { catchAsync } = require('../middlewares/errorHandler');
+const AppError = require('../utils/AppError');
+
 // Temporary in-memory storage (nanti bisa diganti dengan database)
 let posts = [
   {
@@ -17,146 +20,90 @@ let posts = [
 ];
 
 // Get all posts
-const getAllPosts = (req, res) => {
-  try {
-    res.json({
-      success: true,
-      count: posts.length,
-      data: posts
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching posts',
-      error: error.message
-    });
-  }
-};
+const getAllPosts = catchAsync(async (req, res, next) => {
+  res.json({
+    success: true,
+    count: posts.length,
+    data: posts
+  });
+});
 
 // Get post by ID
-const getPostById = (req, res) => {
-  try {
-    const post = posts.find(p => p.id === parseInt(req.params.id));
-    
-    if (!post) {
-      return res.status(404).json({
-        success: false,
-        message: 'Post not found'
-      });
-    }
-    
-    res.json({
-      success: true,
-      data: post
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching post',
-      error: error.message
-    });
+const getPostById = catchAsync(async (req, res, next) => {
+  const post = posts.find(p => p.id === parseInt(req.params.id));
+  
+  if (!post) {
+    return next(new AppError('Post not found', 404));
   }
-};
+  
+  res.json({
+    success: true,
+    data: post
+  });
+});
 
 // Create new post
-const createPost = (req, res) => {
-  try {
-    const { title, content, author } = req.body;
-    
-    if (!title || !content || !author) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide title, content, and author'
-      });
-    }
-    
-    const newPost = {
-      id: posts.length > 0 ? Math.max(...posts.map(p => p.id)) + 1 : 1,
-      title,
-      content,
-      author,
-      createdAt: new Date().toISOString()
-    };
-    
-    posts.push(newPost);
-    
-    res.status(201).json({
-      success: true,
-      message: 'Post created successfully',
-      data: newPost
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error creating post',
-      error: error.message
-    });
-  }
-};
+const createPost = catchAsync(async (req, res, next) => {
+  const { title, content, author } = req.body;
+  
+  const newPost = {
+    id: posts.length > 0 ? Math.max(...posts.map(p => p.id)) + 1 : 1,
+    title,
+    content,
+    author,
+    createdAt: new Date().toISOString()
+  };
+  
+  posts.push(newPost);
+  
+  res.status(201).json({
+    success: true,
+    message: 'Post created successfully',
+    data: newPost
+  });
+});
 
 // Update post
-const updatePost = (req, res) => {
-  try {
-    const postIndex = posts.findIndex(p => p.id === parseInt(req.params.id));
-    
-    if (postIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        message: 'Post not found'
-      });
-    }
-    
-    const { title, content, author } = req.body;
-    
-    posts[postIndex] = {
-      ...posts[postIndex],
-      ...(title && { title }),
-      ...(content && { content }),
-      ...(author && { author }),
-      updatedAt: new Date().toISOString()
-    };
-    
-    res.json({
-      success: true,
-      message: 'Post updated successfully',
-      data: posts[postIndex]
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error updating post',
-      error: error.message
-    });
+const updatePost = catchAsync(async (req, res, next) => {
+  const postIndex = posts.findIndex(p => p.id === parseInt(req.params.id));
+  
+  if (postIndex === -1) {
+    return next(new AppError('Post not found', 404));
   }
-};
+  
+  const { title, content, author } = req.body;
+  
+  posts[postIndex] = {
+    ...posts[postIndex],
+    ...(title && { title }),
+    ...(content && { content }),
+    ...(author && { author }),
+    updatedAt: new Date().toISOString()
+  };
+  
+  res.json({
+    success: true,
+    message: 'Post updated successfully',
+    data: posts[postIndex]
+  });
+});
 
 // Delete post
-const deletePost = (req, res) => {
-  try {
-    const postIndex = posts.findIndex(p => p.id === parseInt(req.params.id));
-    
-    if (postIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        message: 'Post not found'
-      });
-    }
-    
-    const deletedPost = posts.splice(postIndex, 1)[0];
-    
-    res.json({
-      success: true,
-      message: 'Post deleted successfully',
-      data: deletedPost
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error deleting post',
-      error: error.message
-    });
+const deletePost = catchAsync(async (req, res, next) => {
+  const postIndex = posts.findIndex(p => p.id === parseInt(req.params.id));
+  
+  if (postIndex === -1) {
+    return next(new AppError('Post not found', 404));
   }
-};
+  
+  const deletedPost = posts.splice(postIndex, 1)[0];
+  
+  res.json({
+    success: true,
+    message: 'Post deleted successfully',
+    data: deletedPost
+  });
+});
 
 module.exports = {
   getAllPosts,

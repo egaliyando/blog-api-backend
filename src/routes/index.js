@@ -1,8 +1,23 @@
 const express = require('express');
 const router = express.Router();
+const { validatePostCreation, validatePostUpdate, validateId } = require('../middlewares/validation');
 
 // Import controllers
 const postController = require('../controllers/postController');
+const userController = require('../controllers/userController');
+
+// Root endpoint
+router.get('/', (req, res) => {
+  res.json({
+    message: 'Welcome to Blog API',
+    version: '1.0.0',
+    endpoints: {
+      health: '/api/health',
+      users: '/api/users',
+      posts: '/api/posts'
+    }
+  });
+});
 
 // Health check endpoint
 router.get('/health', (req, res) => {
@@ -15,9 +30,12 @@ router.get('/health', (req, res) => {
 
 // Post routes
 router.get('/posts', postController.getAllPosts);
-router.get('/posts/:id', postController.getPostById);
-router.post('/posts', postController.createPost);
-router.put('/posts/:id', postController.updatePost);
-router.delete('/posts/:id', postController.deletePost);
+router.get('/posts/:id', validateId, postController.getPostById);
+router.post('/posts', validatePostCreation, postController.createPost);
+router.put('/posts/:id', validateId, validatePostUpdate, postController.updatePost);
+router.delete('/posts/:id', validateId, postController.deletePost);
+
+// User routes
+router.get('/users', userController.getAllUsers);
 
 module.exports = router;
